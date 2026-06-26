@@ -1,0 +1,7 @@
+2026-06-26 11:34:50,743 | INFO | GET / | status=200 | duracao=0.0037s
+2026-06-26 11:34:51,223 | INFO | GET /favicon.ico | status=404 | duracao=0.0004s
+2026-06-26 11:35:39,252 | INFO | GET /health | status=200 | duracao=0.0006s
+2026-06-26 11:36:21,978 | INFO | GET /docs | status=200 | duracao=0.0003s
+2026-06-26 11:36:22,801 | INFO | GET /openapi.json | status=200 | duracao=0.0053s
+2026-06-26 11:38:16,815 | INFO | POST /predict | status=200 | duracao=0.0023s
+2026-06-26 11:38:35,369 | INFO | POST /predict | status=200 | duracao=0.0010s
