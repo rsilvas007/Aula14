@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLOps — Aulas 13 e 14</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  header {
+    background: linear-gradient(135deg, #1e40af, #7c3aed);
+    padding: 40px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 2.2rem; color: #fff; }
+  header p { color: #bfdbfe; margin-top: 8px; font-size: 1rem; }
+  header .badge {
+    display: inline-block; background: #22c55e;
+    color: #fff; padding: 4px 14px; border-radius: 20px;
+    font-size: 0.8rem; margin-top: 12px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+  .card {
+    background: #1e293b; border-radius: 12px;
+    padding: 24px; margin-bottom: 24px;
+    border-left: 4px solid #3b82f6;
+  }
+  .card.green { border-left-color: #22c55e; }
+  .card.purple { border-left-color: #a855f7; }
+  .card.orange { border-left-color: #f97316; }
+
+  .card h2 { font-size: 1.2rem; color: #93c5fd; margin-bottom: 16px; }
+  .card h3 { font-size: 1rem; color: #cbd5e1; margin: 16px 0 8px; }
+
+  .step {
+    display: flex; align-items: flex-start;
+    gap: 16px; padding: 12px 0;
+    border-bottom: 1px solid #334155;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    background: #3b82f6; color: #fff;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.85rem; flex-shrink: 0;
+  }
+  .step-content h4 { color: #e2e8f0; font-size: 0.95rem; }
+  .step-content p { color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }
+
+  code {
+    background: #0f172a; color: #86efac;
+    padding: 2px 8px; border-radius: 4px;
+    font-family: monospace; font-size: 0.85rem;
+  }
+
+  .code-block {
+    background: #0f172a; border-radius: 8px;
+    padding: 16px; margin: 12px 0;
+    font-family: monospace; font-size: 0.85rem;
+    color: #86efac; overflow-x: auto;
+    border: 1px solid #334155;
+  }
+
+  .result {
+    background: #052e16; border: 1px solid #166534;
+    border-radius: 8px; padding: 12px; margin-top: 8px;
+  }
+  .result span { color: #4ade80; font-family: monospace; font-size: 0.85rem; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th { background: #334155; color: #94a3b8; padding: 10px; text-align: left; font-size: 0.85rem; }
+  td { padding: 10px; border-bottom: 1px solid #334155; font-size: 0.85rem; color: #cbd5e1; }
+  .ok { color: #4ade80; font-weight: bold; }
+
+  .api-test {
+    background: #0f172a; border-radius: 8px;
+    padding: 16px; margin: 12px 0;
+    border: 1px solid #334155;
+  }
+  .api-test .method {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 4px; font-size: 0.75rem;
+    font-weight: bold; margin-right: 8px;
+  }
+  .get { background: #1d4ed8; color: #fff; }
+  .post { background: #15803d; color: #fff; }
+  .api-test .route { color: #f8fafc; font-family: monospace; }
+  .api-test .desc { color: #64748b; font-size: 0.8rem; margin-top: 4px; }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 12px; margin-top: 12px;
+  }
+  .stat-box {
+    background: #0f172a; border-radius: 8px;
+    padding: 16px; text-align: center;
+    border: 1px solid #334155;
+  }
+  .stat-box .value { font-size: 1.8rem; font-weight: bold; color: #4ade80; }
+  .stat-box .label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+
+  footer {
+    text-align: center; padding: 32px;
+    color: #475569; font-size: 0.85rem;
+    border-top: 1px solid #1e293b;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐳 MLOps — Aulas 13 e 14</h1>
+  <p>Containerização com Docker · Monitoramento · Segurança · Deploy</p>
+  <span class="badge">✅ Projeto Concluído</span>
+</header>
+
+<div class="container">
+
+  <!-- AULA 13 -->
+  <div class="card">
+    <h2>📦 Aula 13 — Containerização com Docker</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Respostas iniciais</h4>
+        <p>Ativação do conhecimento prévio sobre containers, Docker e reprodutibilidade de APIs de ML.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>VM x Container</h4>
+        <p>Máquina Virtual virtualiza o SO completo (pesada). Container isola apenas o processo (leve e rápido).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Projeto criado no Google Colab</h4>
+        <p>Estrutura de pastas: <code>api/</code> <code>models/</code> <code>reports/</code> <code>logs/</code></p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>API FastAPI criada — api/main.py</h4>
+        <div class="api-test">
+          <span class="method get">GET</span><span class="route">/</span>
+          <div class="desc">Página inicial da API</div>
+        </div>
+        <div class="api-test">
+          <span class="method get">GET</span><span class="route">/health</span>
+          <div class="desc">Verificação de saúde da API</div>
+        </div>
+        <div class="api-test">
+          <span class="method post">POST</span><span class="route">/predict</span>
+          <div class="desc">Predição de falha em motor industrial</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>Dockerfile criado</h4>
+        <div class="code-block">FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <h4>Arquivos de containerização</h4>
+        <p><code>.dockerignore</code> — exclui arquivos desnecessários da imagem</p>
+        <p><code>.env.example</code> — documenta variáveis de ambiente sem expor segredos</p>
+        <p><code>docker-compose.yml</code> — simplifica o comando de execução</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- AULA 14 -->
+  <div class="card green">
+    <h2>📊 Aula 14 — Monitoramento, Segurança e Governança</h2>
+
+    <div class="step">
+      <div class="step-num">7</div>
+      <div class="step-content">
+        <h4>Conceitos de observabilidade</h4>
+        <p><strong style="color:#4ade80">Log</strong> — registro de eventos · <strong style="color:#4ade80">Métrica</strong> — valores numéricos · <strong style="color:#4ade80">Alerta</strong> — aviso em condição crítica</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">8</div>
+      <div class="step-content">
+        <h4>Boas práticas de segurança aplicadas</h4>
+        <p>API Key · variáveis sensíveis fora do código · .env nunca versionado · .dockerignore · logs sem dados sensíveis</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">9</div>
+      <div class="step-content">
+        <h4>Checklists gerados</h4>
+        <p><code>OPERATION_CHECKLIST.md</code> · <code>SECURITY_CHECKLIST.md</code> · <code>MONITORING_REPORT.md</code></p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GITHUB -->
+  <div class="card purple">
+    <h2>🐙 Deploy no GitHub + Codespace</h2>
+
+    <div class="step">
+      <div class="step-num">10</div>
+      <div class="step-content">
+        <h4>Chave SSH configurada no Colab</h4>
+        <div class="code-block">ssh-keygen -t ed25519 -C "colab-aula14"
+ssh -T git@github.com
+# Hi rsilvas007! You've successfully authenticated.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">11</div>
+      <div class="step-content">
+        <h4>Push para o GitHub</h4>
+        <div class="code-block">git init
+git remote add origin git@github.com:rsilvas007/Aula14.git
+git add .
+git commit -m "Aula 13 e 14 - MLOps"
+git push -u origin master</div>
+        <div class="result">
+          <span>✅ master -> master | 10 arquivos enviados</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">12</div>
+      <div class="step-content">
+        <h4>API testada no Codespace</h4>
+        <div class="code-block">python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000</div>
+        <div class="result">
+          <span>✅ Uvicorn running on http://0.0.0.0:8000</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DOCKER -->
+  <div class="card orange">
+    <h2>🐳 Docker no Codespace — Evidências</h2>
+
+    <div class="step">
+      <div class="step-num">13</div>
+      <div class="step-content">
+        <h4>Build da imagem Docker</h4>
+        <div class="code-block">docker build -t api-manutencao-preditiva:v0.5.0 .</div>
+        <div class="result"><span>✅ Imagem construída com sucesso</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">14</div>
+      <div class="step-content">
+        <h4>Container executado na porta 8001</h4>
+        <div class="code-block">docker run --rm --name api-mlops-aula14 -p 8001:8000 api-manutencao-preditiva:v0.5.0</div>
+        <div class="result"><span>✅ Uvicorn running on http://0.0.0.0:8000</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">15</div>
+      <div class="step-content">
+        <h4>Testes de predição no container</h4>
+        <h3>Motor com falha</h3>
+        <div class="result">
+          <span>temperatura: 90° · vibração: 7 · corrente: 16A · horas: 4000<br>
+          → classe_prevista: 1 · score_risco: 4 · "Falha provável" ⚠️</span>
+        </div>
+        <h3>Motor saudável</h3>
+        <div class="result">
+          <span>temperatura: 60° · vibração: 3 · corrente: 10A · horas: 1000<br>
+          → classe_prevista: 0 · score_risco: 0 · "Operação normal" ✅</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">16</div>
+      <div class="step-content">
+        <h4>Métricas do container (docker stats)</h4>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="value">0.14%</div>
+            <div class="label">CPU</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">40 MB</div>
+            <div class="label">Memória usada</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">0.51%</div>
+            <div class="label">% da RAM total</div>
+          </div>
+          <div class="stat-box">
+            <div class="value">6</div>
+            <div class="label">Processos ativos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TABELA FINAL -->
+  <div class="card">
+    <h2>✅ Resumo Final — Status do Projeto</h2>
+    <table>
+      <tr><th>Etapa</th><th>Ferramenta</th><th>Status</th></tr>
+      <tr><td>Projeto e API criados</td><td>Google Colab</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Dockerfile criado</td><td>Google Colab</td><td class="ok">✅ OK</td></tr>
+      <tr><td>.dockerignore e .env.example</td><td>Google Colab</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Checklists e registros</td><td>Google Colab</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Chave SSH configurada</td><td>Colab + GitHub</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Push para o GitHub</td><td>Git SSH</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Codespace aberto</td><td>GitHub</td><td class="ok">✅ OK</td></tr>
+      <tr><td>API testada no Codespace</td><td>FastAPI + Uvicorn</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Docker build executado</td><td>Docker 29.3</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Docker run executado</td><td>Docker 29.3</td><td class="ok">✅ OK</td></tr>
+      <tr><td>/health testado no container</td><td>curl</td><td class="ok">✅ OK</td></tr>
+      <tr><td>/predict testado no container</td><td>curl</td><td class="ok">✅ OK</td></tr>
+      <tr><td>docker logs e stats</td><td>Docker</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Evidências documentadas</td><td>Google Colab</td><td class="ok">✅ OK</td></tr>
+      <tr><td>Push final para o GitHub</td><td>Git</td><td class="ok">✅ OK</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  Projeto de MLOps — Aulas 13 e 14 · 
+  <a href="https://github.com/rsilvas007/Aula14" style="color:#3b82f6">github.com/rsilvas007/Aula14</a>
+</footer>
+
+</body>
+</html>
