@@ -45,3 +45,15 @@ def predict(dados: MotorInput, x_api_key: Optional[str] = Header(default=None)):
     if dados.horas_operacao > 3500: score += 1
     classe = 1 if score >= 2 else 0
     return {'classe_prevista': classe, 'score_risco': score, 'descricao': 'Falha provável' if classe else 'Operação normal', 'model_version': '0.6.0', 'timestamp': datetime.now().isoformat()}
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+@app.get("/monitor")
+def monitor():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "monitor.html"))
+
+@app.get("/painel")
+def painel():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "painel.html"))

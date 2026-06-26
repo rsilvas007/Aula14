@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor — API MLOps</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  header {
+    background: #1e293b; border-bottom: 1px solid #334155;
+    padding: 16px 24px; display: flex;
+    align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 1.1rem; color: #f8fafc; }
+  .status-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: #052e16; border: 1px solid #166534;
+    padding: 6px 14px; border-radius: 20px;
+  }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #4ade80; animation: pulse 1.5s infinite;
+  }
+  .dot.red { background: #f87171; animation: none; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+  .status-pill span { font-size: 0.8rem; color: #4ade80; }
+  .status-pill.offline span { color: #f87171; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; padding: 24px;
+  }
+  .metric {
+    background: #1e293b; border-radius: 12px;
+    padding: 20px; border: 1px solid #334155;
+  }
+  .metric .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+  .metric .value { font-size: 2rem; font-weight: bold; margin: 8px 0 4px; }
+  .metric .sub { font-size: 0.8rem; color: #64748b; }
+  .green { color: #4ade80; }
+  .blue { color: #60a5fa; }
+  .purple { color: #c084fc; }
+  .orange { color: #fb923c; }
+
+  .panels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; padding: 0 24px 24px;
+  }
+
+  .panel {
+    background: #1e293b; border-radius: 12px;
+    border: 1px solid #334155; overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 20px; border-bottom: 1px solid #334155;
+    font-size: 0.9rem; color: #94a3b8; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .panel-body { padding: 16px; }
+
+  .log-line {
+    font-family: monospace; font-size: 0.8rem;
+    padding: 6px 0; border-bottom: 1px solid #1e293b;
+    display: flex; gap: 12px;
+  }
+  .log-line .time { color: #475569; flex-shrink: 0; }
+  .log-line .ok { color: #4ade80; }
+  .log-line .err { color: #f87171; }
+  .log-line .msg { color: #cbd5e1; }
+
+  .test-btn {
+    background: #2563eb; color: #fff; border: none;
+    padding: 10px 20px; border-radius: 8px;
+    cursor: pointer; font-size: 0.85rem; margin: 4px;
+    transition: background 0.2s;
+  }
+  .test-btn:hover { background: #1d4ed8; }
+  .test-btn.red-btn { background: #dc2626; }
+  .test-btn.red-btn:hover { background: #b91c1c; }
+  .test-btn.green-btn { background: #16a34a; }
+  .test-btn.green-btn:hover { background: #15803d; }
+
+  .result-box {
+    background: #0f172a; border-radius: 8px;
+    padding: 14px; margin-top: 12px;
+    font-family: monospace; font-size: 0.82rem;
+    border: 1px solid #334155; min-height: 60px;
+    color: #94a3b8;
+  }
+  .result-box.success { border-color: #166534; color: #4ade80; }
+  .result-box.error { border-color: #991b1b; color: #f87171; }
+  .result-box.warning { border-color: #92400e; color: #fb923c; }
+
+  .bar-container { margin: 8px 0; }
+  .bar-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .bar { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .bar-fill.cpu { background: #3b82f6; }
+  .bar-fill.mem { background: #a855f7; }
+  .bar-fill.req { background: #22c55e; }
+
+  #timer { font-size: 0.75rem; color: #475569; }
+
+  .tag {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 0.72rem; font-weight: bold;
+  }
+  .tag.get { background: #1d4ed8; color: #fff; }
+  .tag.post { background: #15803d; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐳 Monitor — API de Manutenção Preditiva</h1>
+  <div class="status-pill" id="statusPill">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">Verificando...</span>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="metric">
+    <div class="label">Status</div>
+    <div class="value green" id="metricStatus">—</div>
+    <div class="sub">Rota /health</div>
+  </div>
+  <div class="metric">
+    <div class="label">Total de Requisições</div>
+    <div class="value blue" id="metricReqs">0</div>
+    <div class="sub">desde o início</div>
+  </div>
+  <div class="metric">
+    <div class="label">Último Tempo de Resposta</div>
+    <div class="value purple" id="metricTime">—</div>
+    <div class="sub">milissegundos</div>
+  </div>
+  <div class="metric">
+    <div class="label">Próximo Health Check</div>
+    <div class="value orange" id="metricNext">10s</div>
+    <div class="sub">automático</div>
+  </div>
+</div>
+
+<div class="panels">
+
+  <!-- LOGS -->
+  <div class="panel">
+    <div class="panel-header">
+      📋 Log de Eventos
+      <span id="timer">atualiza em 10s</span>
+    </div>
+    <div class="panel-body" id="logContainer">
+      <div class="log-line"><span class="time">--:--:--</span><span class="msg">Aguardando primeira verificação...</span></div>
+    </div>
+  </div>
+
+  <!-- RECURSOS -->
+  <div class="panel">
+    <div class="panel-header">📊 Recursos Observados (docker stats)</div>
+    <div class="panel-body">
+      <div class="bar-container">
+        <div class="bar-label"><span>CPU</span><span id="cpuVal">0.14%</span></div>
+        <div class="bar"><div class="bar-fill cpu" id="cpuBar" style="width:0.14%"></div></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar-label"><span>Memória</span><span id="memVal">40 MB / 7.7 GB</span></div>
+        <div class="bar"><div class="bar-fill mem" id="memBar" style="width:0.51%"></div></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar-label"><span>Requisições OK</span><span id="reqVal">0</span></div>
+        <div class="bar"><div class="bar-fill req" id="reqBar" style="width:0%"></div></div>
+      </div>
+      <br>
+      <div style="font-size:0.78rem; color:#475569; margin-top:8px;">
+        ℹ️ Valores de CPU e memória coletados via <code style="color:#86efac">docker stats</code> na sessão anterior.<br>
+        Requisições são contadas em tempo real nesta sessão.
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTES MANUAIS -->
+  <div class="panel">
+    <div class="panel-header">🧪 Testar Endpoints</div>
+    <div class="panel-body">
+      <button class="test-btn" onclick="testHealth()">
+        <span class="tag get">GET</span> /health
+      </button>
+      <button class="test-btn" onclick="testHome()">
+        <span class="tag get">GET</span> /
+      </button>
+      <button class="test-btn green-btn" onclick="testPredictNormal()">
+        <span class="tag post">POST</span> /predict — Motor Normal
+      </button>
+      <button class="test-btn red-btn" onclick="testPredictFalha()">
+        <span class="tag post">POST</span> /predict — Motor com Falha
+      </button>
+      <div class="result-box" id="resultBox">Clique em um botão para testar...</div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="panel">
+    <div class="panel-header">📈 Histórico de Predições</div>
+    <div class="panel-body" id="predHistory">
+      <div style="color:#475569; font-size:0.85rem;">Nenhuma predição ainda. Use os botões ao lado.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = window.location.origin.replace('-3000', '-8000');
+  let totalReqs = 0;
+  let countdown = 10;
+  let predCount = 0;
+
+  function now() {
+    return new Date().toLocaleTimeString('pt-BR');
+  }
+
+  function addLog(status, method, route, detail) {
+    const container = document.getElementById('logContainer');
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    const cls = status === 200 ? 'ok' : 'err';
+    line.innerHTML = `
+      <span class="time">${now()}</span>
+      <span class="${cls}">${status}</span>
+      <span class="msg">${method} ${route} — ${detail}</span>
+    `;
+    container.prepend(line);
+    if (container.children.length > 20) container.lastChild.remove();
+  }
+
+  function updateReqs() {
+    totalReqs++;
+    document.getElementById('metricReqs').textContent = totalReqs;
+    const pct = Math.min(totalReqs * 5, 100);
+    document.getElementById('reqVal').textContent = totalReqs;
+    document.getElementById('reqBar').style.width = pct + '%';
+  }
+
+  async function checkHealth() {
+    const t0 = Date.now();
+    try {
+      const r = await fetch(API + '/health');
+      const ms = Date.now() - t0;
+      const data = await r.json();
+      document.getElementById('metricStatus').textContent = 'online';
+      document.getElementById('metricTime').textContent = ms + ' ms';
+      document.getElementById('statusText').textContent = 'API Online';
+      document.getElementById('statusDot').classList.remove('red');
+      document.getElementById('statusPill').classList.remove('offline');
+      addLog(200, 'GET', '/health', `ok · ${ms}ms`);
+      updateReqs();
+    } catch(e) {
+      document.getElementById('metricStatus').textContent = 'offline';
+      document.getElementById('statusText').textContent = 'API Offline';
+      document.getElementById('statusDot').classList.add('red');
+      document.getElementById('statusPill').classList.add('offline');
+      addLog(500, 'GET', '/health', 'sem resposta');
+    }
+  }
+
+  async function testHealth() {
+    const box = document.getElementById('resultBox');
+    box.className = 'result-box';
+    box.textContent = 'Chamando /health...';
+    try {
+      const t0 = Date.now();
+      const r = await fetch(API + '/health');
+      const data = await r.json();
+      const ms = Date.now() - t0;
+      box.className = 'result-box success';
+      box.textContent = JSON.stringify(data, null, 2) + `\n\n⏱ ${ms}ms`;
+      addLog(200, 'GET', '/health', ms + 'ms');
+      updateReqs();
+    } catch(e) {
+      box.className = 'result-box error';
+      box.textContent = 'Erro: ' + e.message;
+    }
+  }
+
+  async function testHome() {
+    const box = document.getElementById('resultBox');
+    box.className = 'result-box';
+    box.textContent = 'Chamando /...';
+    try {
+      const t0 = Date.now();
+      const r = await fetch(API + '/');
+      const data = await r.json();
+      const ms = Date.now() - t0;
+      box.className = 'result-box success';
+      box.textContent = JSON.stringify(data, null, 2) + `\n\n⏱ ${ms}ms`;
+      addLog(200, 'GET', '/', ms + 'ms');
+      updateReqs();
+    } catch(e) {
+      box.className = 'result-box error';
+      box.textContent = 'Erro: ' + e.message;
+    }
+  }
+
+  async function testPredict(payload, label) {
+    const box = document.getElementById('resultBox');
+    box.className = 'result-box';
+    box.textContent = 'Enviando predição...';
+    try {
+      const t0 = Date.now();
+      const r = await fetch(API + '/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      const ms = Date.now() - t0;
+      const isFalha = data.classe_prevista === 1;
+      box.className = 'result-box ' + (isFalha ? 'warning' : 'success');
+      box.textContent = JSON.stringify(data, null, 2) + `\n\n⏱ ${ms}ms`;
+      addLog(200, 'POST', '/predict', `score=${data.score_risco} · ${data.descricao} · ${ms}ms`);
+      updateReqs();
+      addPredHistory(label, data, ms);
+    } catch(e) {
+      box.className = 'result-box error';
+      box.textContent = 'Erro: ' + e.message;
+    }
+  }
+
+  function testPredictNormal() {
+    testPredict({
+      temperatura_motor: 60, vibracao_motor: 3,
+      corrente_motor: 10, horas_operacao: 1000
+    }, 'Motor Normal');
+  }
+
+  function testPredictFalha() {
+    testPredict({
+      temperatura_motor: 90, vibracao_motor: 7,
+      corrente_motor: 16, horas_operacao: 4000
+    }, 'Motor com Falha');
+  }
+
+  function addPredHistory(label, data, ms) {
+    predCount++;
+    const container = document.getElementById('predHistory');
+    if (predCount === 1) container.innerHTML = '';
+    const isFalha = data.classe_prevista === 1;
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 0; border-bottom:1px solid #334155; font-size:0.82rem;';
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="color:#cbd5e1">${now()} — ${label}</span>
+        <span style="color:${isFalha ? '#fb923c' : '#4ade80'}">
+          ${isFalha ? '⚠️ Falha' : '✅ Normal'}
+        </span>
+      </div>
+      <div style="color:#475569; margin-top:2px;">score: ${data.score_risco}/4 · ${ms}ms</div>
+    `;
+    container.prepend(div);
+  }
+
+  // Countdown e health check automático
+  setInterval(() => {
+    countdown--;
+    document.getElementById('metricNext').textContent = countdown + 's';
+    document.getElementById('timer').textContent = `atualiza em ${countdown}s`;
+    if (countdown <= 0) {
+      countdown = 10;
+      checkHealth();
+    }
+  }, 1000);
+
+  // Primeira verificação imediata
+  checkHealth();
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Técnico — Manutenção Preditiva</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  header {
+    background: #1e293b; border-bottom: 2px solid #334155;
+    padding: 16px 24px; display: flex;
+    align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 1.1rem; color: #f8fafc; }
+  .pill {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: bold;
+  }
+  .pill.online { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .pill.offline { background: #450a0a; color: #f87171; border: 1px solid #991b1b; }
+
+  .top { display: grid; grid-template-columns: repeat(3,1fr); gap:16px; padding:24px 24px 0; }
+
+  .kpi { background:#1e293b; border-radius:12px; padding:20px; border:1px solid #334155; }
+  .kpi .label { font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; }
+  .kpi .value { font-size:2rem; font-weight:bold; margin:8px 0 4px; }
+  .kpi .sub { font-size:0.8rem; color:#64748b; }
+
+  .main { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px 24px; }
+  .full { grid-column: 1 / -1; }
+
+  .card { background:#1e293b; border-radius:12px; border:1px solid #334155; overflow:hidden; }
+  .card-header {
+    padding:14px 20px; border-bottom:1px solid #334155;
+    font-size:0.9rem; color:#94a3b8;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .card-body { padding:20px; }
+
+  /* Formulário de diagnóstico */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .field label { font-size:0.78rem; color:#64748b; display:block; margin-bottom:6px; }
+  .field input {
+    width:100%; background:#0f172a; border:1px solid #334155;
+    border-radius:8px; padding:10px 14px; color:#e2e8f0;
+    font-size:0.9rem;
+  }
+  .field input:focus { outline:none; border-color:#3b82f6; }
+  .field .hint { font-size:0.72rem; color:#475569; margin-top:4px; }
+
+  .btn {
+    padding:12px 24px; border-radius:8px; border:none;
+    font-size:0.9rem; font-weight:bold; cursor:pointer;
+    transition:all 0.2s;
+  }
+  .btn-primary { background:#2563eb; color:#fff; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .btn-clear { background:#334155; color:#94a3b8; }
+  .btn-clear:hover { background:#475569; }
+
+  /* Resultado do diagnóstico */
+  .alert-box {
+    border-radius:12px; padding:20px; margin-top:16px;
+    display:none;
+  }
+  .alert-box.normal { background:#052e16; border:2px solid #166534; }
+  .alert-box.atencao { background:#1c1917; border:2px solid #92400e; }
+  .alert-box.critico { background:#450a0a; border:2px solid #991b1b; }
+
+  .alert-title { font-size:1.3rem; font-weight:bold; margin-bottom:8px; }
+  .normal .alert-title { color:#4ade80; }
+  .atencao .alert-title { color:#fb923c; }
+  .critico .alert-title { color:#f87171; }
+
+  .alert-desc { font-size:0.9rem; color:#94a3b8; margin-bottom:16px; }
+
+  .acoes h4 { font-size:0.8rem; color:#64748b; text-transform:uppercase; margin-bottom:10px; }
+  .acao-item {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px; background:#0f172a; border-radius:8px;
+    margin-bottom:8px;
+  }
+  .acao-icon { font-size:1.2rem; flex-shrink:0; }
+  .acao-text h5 { font-size:0.85rem; color:#e2e8f0; }
+  .acao-text p { font-size:0.78rem; color:#64748b; margin-top:2px; }
+
+  .score-bar { margin:12px 0; }
+  .score-bar .label { display:flex; justify-content:space-between; font-size:0.78rem; color:#64748b; margin-bottom:6px; }
+  .score-track { height:12px; background:#334155; border-radius:6px; overflow:hidden; }
+  .score-fill { height:100%; border-radius:6px; transition:width 0.8s; }
+  .score-fill.s0 { background:#4ade80; width:0%; }
+  .score-fill.s1 { background:#a3e635; width:25%; }
+  .score-fill.s2 { background:#fb923c; width:50%; }
+  .score-fill.s3 { background:#f97316; width:75%; }
+  .score-fill.s4 { background:#f87171; width:100%; }
+
+  /* Indicadores individuais */
+  .indicadores { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:12px 0; }
+  .ind {
+    background:#0f172a; border-radius:8px; padding:12px;
+    border-left:3px solid #334155;
+  }
+  .ind.ok { border-left-color:#4ade80; }
+  .ind.bad { border-left-color:#f87171; }
+  .ind .ind-label { font-size:0.72rem; color:#64748b; }
+  .ind .ind-val { font-size:1rem; font-weight:bold; margin-top:4px; }
+  .ind.ok .ind-val { color:#4ade80; }
+  .ind.bad .ind-val { color:#f87171; }
+  .ind .ind-limit { font-size:0.7rem; color:#475569; margin-top:2px; }
+
+  /* Histórico */
+  .hist-item {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid #334155; font-size:0.82rem;
+  }
+  .hist-item:last-child { border-bottom:none; }
+  .badge {
+    padding:3px 10px; border-radius:12px; font-size:0.72rem; font-weight:bold;
+  }
+  .badge.normal { background:#052e16; color:#4ade80; }
+  .badge.atencao { background:#1c1917; color:#fb923c; }
+  .badge.critico { background:#450a0a; color:#f87171; }
+
+  .loading { text-align:center; padding:20px; color:#475569; display:none; }
+  .spinner { display:inline-block; width:24px; height:24px; border:3px solid #334155; border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 Painel Técnico — Manutenção Preditiva de Motores</h1>
+  <span class="pill online" id="apiStatus">🟢 API Online</span>
+</header>
+
+<!-- KPIs -->
+<div class="top">
+  <div class="kpi">
+    <div class="label">Diagnósticos Realizados</div>
+    <div class="value" style="color:#60a5fa" id="kpiTotal">0</div>
+    <div class="sub">nesta sessão</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Motores em Alerta</div>
+    <div class="value" style="color:#fb923c" id="kpiAlerta">0</div>
+    <div class="sub">requer atenção</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Motores Críticos</div>
+    <div class="value" style="color:#f87171" id="kpiCritico">0</div>
+    <div class="sub">ação imediata</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- FORMULÁRIO -->
+  <div class="card">
+    <div class="card-header">
+      📡 Inserir Leitura do Motor
+      <span style="font-size:0.75rem" id="ultimaLeitura">—</span>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>🌡️ Temperatura do Motor (°C)</label>
+          <input type="number" id="temp" placeholder="Ex: 85" min="0" max="150">
+          <div class="hint">Limite crítico: acima de 82°C</div>
+        </div>
+        <div class="field">
+          <label>📳 Vibração do Motor</label>
+          <input type="number" id="vibr" placeholder="Ex: 6.5" min="0" max="20" step="0.1">
+          <div class="hint">Limite crítico: acima de 5.8</div>
+        </div>
+        <div class="field">
+          <label>⚡ Corrente do Motor (A)</label>
+          <input type="number" id="corr" placeholder="Ex: 15" min="0" max="50">
+          <div class="hint">Limite crítico: acima de 14A</div>
+        </div>
+        <div class="field">
+          <label>⏱️ Horas de Operação</label>
+          <input type="number" id="horas" placeholder="Ex: 4200" min="0" max="100000">
+          <div class="hint">Limite crítico: acima de 3500h</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-primary" onclick="diagnosticar()">🔍 Analisar Motor</button>
+        <button class="btn btn-clear" onclick="limpar()">🔄 Limpar</button>
+        <button class="btn btn-clear" onclick="simularNormal()">✅ Simular Normal</button>
+        <button class="btn btn-clear" onclick="simularFalha()">⚠️ Simular Falha</button>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top:8px; font-size:0.85rem;">Analisando motor...</p>
+      </div>
+
+      <!-- Resultado -->
+      <div class="alert-box" id="alertBox">
+        <div class="alert-title" id="alertTitle"></div>
+        <div class="alert-desc" id="alertDesc"></div>
+
+        <div class="score-bar">
+          <div class="label">
+            <span>Nível de Risco</span>
+            <span id="scoreLabel"></span>
+          </div>
+          <div class="score-track">
+            <div class="score-fill" id="scoreFill"></div>
+          </div>
+        </div>
+
+        <div class="indicadores" id="indicadores"></div>
+
+        <div class="acoes" id="acoesBox">
+          <h4>📋 Ações Recomendadas</h4>
+          <div id="acoesList"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="card">
+    <div class="card-header">
+      📈 Histórico de Diagnósticos
+      <button class="btn btn-clear" style="padding:4px 10px; font-size:0.75rem" onclick="limparHistorico()">Limpar</button>
+    </div>
+    <div class="card-body" id="historico">
+      <div style="color:#475569; font-size:0.85rem; text-align:center; padding:20px;">
+        Nenhum diagnóstico ainda.<br>Insira os dados do motor ao lado.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = window.location.origin;
+  let total = 0, alerta = 0, critico = 0;
+  let historico = [];
+
+  async function diagnosticar() {
+    const temp = parseFloat(document.getElementById('temp').value);
+    const vibr = parseFloat(document.getElementById('vibr').value);
+    const corr = parseFloat(document.getElementById('corr').value);
+    const horas = parseInt(document.getElementById('horas').value);
+
+    if (isNaN(temp) || isNaN(vibr) || isNaN(corr) || isNaN(horas)) {
+      alert('Preencha todos os campos!');
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('alertBox').style.display = 'none';
+
+    try {
+      const r = await fetch(API + '/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          temperatura_motor: temp,
+          vibracao_motor: vibr,
+          corrente_motor: corr,
+          horas_operacao: horas
+        })
+      });
+
+      const data = await r.json();
+      document.getElementById('loading').style.display = 'none';
+      mostrarResultado(data, {temp, vibr, corr, horas});
+      adicionarHistorico(data, {temp, vibr, corr, horas});
+      atualizarKPIs(data);
+      document.getElementById('ultimaLeitura').textContent = new Date().toLocaleTimeString('pt-BR');
+
+    } catch(e) {
+      document.getElementById('loading').style.display = 'none';
+      alert('Erro ao conectar com a API: ' + e.message);
+    }
+  }
+
+  function mostrarResultado(data, inputs) {
+    const box = document.getElementById('alertBox');
+    const score = data.score_risco;
+
+    // Define nível
+    let nivel, titulo, desc;
+    if (score === 0) {
+      nivel = 'normal';
+      titulo = '✅ Motor em Operação Normal';
+      desc = 'Todos os indicadores dentro dos limites. Nenhuma ação necessária no momento. Continue o monitoramento periódico.';
+    } else if (score === 1) {
+      nivel = 'atencao';
+      titulo = '⚠️ Atenção — Sinal de Alerta Detectado';
+      desc = 'Um indicador está acima do limite. Acompanhe de perto e programe inspeção preventiva.';
+    } else if (score === 2) {
+      nivel = 'atencao';
+      titulo = '⚠️ Alerta Moderado — Dois Sinais Detectados';
+      desc = 'Dois indicadores acima do limite. Recomenda-se inspeção em até 48 horas.';
+    } else if (score === 3) {
+      nivel = 'critico';
+      titulo = '🚨 Alerta Crítico — Três Sinais Detectados';
+      desc = 'Três indicadores acima do limite. Programe parada para manutenção o quanto antes.';
+    } else {
+      nivel = 'critico';
+      titulo = '🔴 CRÍTICO — Falha Iminente';
+      desc = 'Todos os indicadores estão acima dos limites. PARE O MOTOR IMEDIATAMENTE e acione a equipe de manutenção.';
+    }
+
+    box.className = 'alert-box ' + nivel;
+    document.getElementById('alertTitle').textContent = titulo;
+    document.getElementById('alertDesc').textContent = desc;
+    document.getElementById('scoreLabel').textContent = score + '/4 indicadores em alerta';
+
+    // Barra de score
+    const fill = document.getElementById('scoreFill');
+    fill.className = 'score-fill s' + score;
+
+    // Indicadores individuais
+    const ind = document.getElementById('indicadores');
+    ind.innerHTML = `
+      <div class="ind ${inputs.temp > 82 ? 'bad' : 'ok'}">
+        <div class="ind-label">🌡️ Temperatura</div>
+        <div class="ind-val">${inputs.temp}°C</div>
+        <div class="ind-limit">Limite: 82°C ${inputs.temp > 82 ? '⚠️' : '✅'}</div>
+      </div>
+      <div class="ind ${inputs.vibr > 5.8 ? 'bad' : 'ok'}">
+        <div class="ind-label">📳 Vibração</div>
+        <div class="ind-val">${inputs.vibr}</div>
+        <div class="ind-limit">Limite: 5.8 ${inputs.vibr > 5.8 ? '⚠️' : '✅'}</div>
+      </div>
+      <div class="ind ${inputs.corr > 14 ? 'bad' : 'ok'}">
+        <div class="ind-label">⚡ Corrente</div>
+        <div class="ind-val">${inputs.corr}A</div>
+        <div class="ind-limit">Limite: 14A ${inputs.corr > 14 ? '⚠️' : '✅'}</div>
+      </div>
+      <div class="ind ${inputs.horas > 3500 ? 'bad' : 'ok'}">
+        <div class="ind-label">⏱️ Horas de Operação</div>
+        <div class="ind-val">${inputs.horas}h</div>
+        <div class="ind-limit">Limite: 3500h ${inputs.horas > 3500 ? '⚠️' : '✅'}</div>
+      </div>
+    `;
+
+    // Ações recomendadas
+    const acoes = getAcoes(nivel, score, inputs);
+    document.getElementById('acoesList').innerHTML = acoes.map(a => `
+      <div class="acao-item">
+        <div class="acao-icon">${a.icon}</div>
+        <div class="acao-text">
+          <h5>${a.titulo}</h5>
+          <p>${a.desc}</p>
+        </div>
+      </div>
+    `).join('');
+
+    box.style.display = 'block';
+  }
+
+  function getAcoes(nivel, score, inputs) {
+    if (nivel === 'normal') return [
+      { icon: '📋', titulo: 'Manter monitoramento', desc: 'Continuar leituras periódicas conforme cronograma.' },
+      { icon: '🗓️', titulo: 'Próxima inspeção programada', desc: 'Manter a inspeção preventiva no prazo regular.' }
+    ];
+    if (score === 1) return [
+      { icon: '👁️', titulo: 'Aumentar frequência de leitura', desc: 'Monitorar a cada 2 horas até estabilizar.' },
+      { icon: '📝', titulo: 'Registrar ocorrência', desc: 'Anotar no sistema de manutenção para acompanhamento.' },
+      { icon: '🔧', titulo: 'Verificar condições externas', desc: 'Checar ventilação, carga e ambiente ao redor do motor.' }
+    ];
+    if (score === 2) return [
+      { icon: '🚧', titulo: 'Programar inspeção em 48h', desc: 'Acionar técnico para inspeção presencial em até 48 horas.' },
+      { icon: '📉', titulo: 'Reduzir carga do motor', desc: 'Se possível, operar em carga reduzida até a inspeção.' },
+      { icon: '📢', titulo: 'Notificar supervisor', desc: 'Comunicar o supervisor de manutenção sobre os sinais detectados.' },
+      { icon: '📝', titulo: 'Abrir ordem de serviço', desc: 'Registrar OS de manutenção corretiva com prioridade média.' }
+    ];
+    return [
+      { icon: '🔴', titulo: 'PARAR O MOTOR', desc: 'Interromper operação imediatamente para evitar danos maiores.' },
+      { icon: '📞', titulo: 'Acionar equipe de manutenção', desc: 'Chamar técnico especializado com urgência.' },
+      { icon: '🚨', titulo: 'Isolar o equipamento', desc: 'Sinalizar e isolar o motor para segurança da equipe.' },
+      { icon: '📝', titulo: 'Abrir OS de emergência', desc: 'Registrar ocorrência como manutenção corretiva de emergência.' },
+      { icon: '📸', titulo: 'Documentar condição atual', desc: 'Fotografar e registrar os parâmetros lidos para análise.' }
+    ];
+  }
+
+  function adicionarHistorico(data, inputs) {
+    const score = data.score_risco;
+    let nivel = score === 0 ? 'normal' : score <= 2 ? 'atencao' : 'critico';
+    let label = score === 0 ? 'Normal' : score <= 2 ? 'Atenção' : 'Crítico';
+
+    historico.unshift({ data, inputs, nivel, label, hora: new Date().toLocaleTimeString('pt-BR') });
+
+    const container = document.getElementById('historico');
+    container.innerHTML = historico.map(h => `
+      <div class="hist-item">
+        <div>
+          <div style="color:#e2e8f0; font-size:0.85rem;">${h.hora} — Score ${h.data.score_risco}/4</div>
+          <div style="color:#475569; font-size:0.75rem; margin-top:2px;">
+            ${h.inputs.temp}°C · ${h.inputs.vibr} vib · ${h.inputs.corr}A · ${h.inputs.horas}h
+          </div>
+        </div>
+        <span class="badge ${h.nivel}">${h.label}</span>
+      </div>
+    `).join('');
+  }
+
+  function atualizarKPIs(data) {
+    total++;
+    const score = data.score_risco;
+    if (score >= 3) critico++;
+    else if (score >= 1) alerta++;
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiAlerta').textContent = alerta;
+    document.getElementById('kpiCritico').textContent = critico;
+  }
+
+  function simularNormal() {
+    document.getElementById('temp').value = 60;
+    document.getElementById('vibr').value = 3;
+    document.getElementById('corr').value = 10;
+    document.getElementById('horas').value = 1000;
+    diagnosticar();
+  }
+
+  function simularFalha() {
+    document.getElementById('temp').value = 90;
+    document.getElementById('vibr').value = 7;
+    document.getElementById('corr').value = 16;
+    document.getElementById('horas').value = 4000;
+    diagnosticar();
+  }
+
+  function limpar() {
+    ['temp','vibr','corr','horas'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('alertBox').style.display = 'none';
+  }
+
+  function limparHistorico() {
+    historico = [];
+    document.getElementById('historico').innerHTML = '<div style="color:#475569; font-size:0.85rem; text-align:center; padding:20px;">Histórico limpo.</div>';
+  }
+
+  // Verifica API
+  async function checkAPI() {
+    try {
+      await fetch(API + '/health');
+      document.getElementById('apiStatus').textContent = '🟢 API Online';
+      document.getElementById('apiStatus').className = 'pill online';
+    } catch {
+      document.getElementById('apiStatus').textContent = '🔴 API Offline';
+      document.getElementById('apiStatus').className = 'pill offline';
+    }
+  }
+  checkAPI();
+  setInterval(checkAPI, 15000);
+</script>
+</body>
+</html>
