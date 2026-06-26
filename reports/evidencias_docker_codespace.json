@@ -1,0 +1,10 @@
+{
+    "docker_build": "OK - imagem api-manutencao-preditiva:v0.5.0 construída no Codespace",
+    "docker_run": "OK - container api-mlops-aula14 executado na porta 8001",
+    "health_check": "{\"status\": \"ok\", \"timestamp\": \"2026-06-26T11:41:29.866341\"}",
+    "predict_falha": "{\"classe_prevista\": 1, \"score_risco\": 4, \"descricao\": \"Falha provável\"}",
+    "predict_normal": "{\"classe_prevista\": 0, \"score_risco\": 0, \"descricao\": \"Operação normal\"}",
+    "docker_logs": "GET /, GET /health, POST /predict - todos 200 OK",
+    "docker_stats": "CPU 0.14%, MEM 40.39MiB / 7.758GiB (0.51%)",
+    "repositorio": "https://github.com/rsilvas007/Aula14"
+}
