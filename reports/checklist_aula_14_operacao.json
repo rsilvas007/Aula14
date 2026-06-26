@@ -1,0 +1,10 @@
+{
+    "logs_consultados": "validar no terminal",
+    "health_check_testado": "validar no terminal",
+    "docker_stats_observado": "validar no terminal",
+    "operation_checklist_criado": true,
+    "security_checklist_criado": true,
+    "monitoring_report_criado": true,
+    "cuidados_variaveis_sensiveis_registrados": true,
+    "custos_cloud_discutidos": true
+}
